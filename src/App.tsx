@@ -100,7 +100,7 @@ function App(): JSX.Element {
           ></Motion>
         )}
       </Drawer>
-      {/* <Footer setOpenDrawer={setOpenDrawer} setActiveTab={setActiveTab}></Footer> */}
+      <Footer setOpenDrawer={setOpenDrawer} setActiveTab={setActiveTab}></Footer>
     </>
   );
 }
