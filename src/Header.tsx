@@ -1,7 +1,7 @@
-import { Avatar, IconButton } from "@mui/material"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faGithub } from "@fortawesome/free-brands-svg-icons"
-import { Download } from "@mui/icons-material"
+import { Avatar, IconButton } from "@mui/material";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGithub } from "@fortawesome/free-brands-svg-icons";
+import { Download } from "@mui/icons-material";
 
 function Header({ fps }: { fps: number }): JSX.Element {
   return (
@@ -26,7 +26,7 @@ function Header({ fps }: { fps: number }): JSX.Element {
       <div className="header-item">
         <p>FPS: {fps}</p>
       </div>
-      <div className="header-item" style={{ justifyContent: "flex-end" }}>
+      {/* <div className="header-item" style={{ justifyContent: "flex-end" }}>
         <a href="https://github.com/AmyangXYZ/MiKaPo" target="_blank">
           <IconButton>
             <FontAwesomeIcon icon={faGithub} color="white" size="sm" />
@@ -40,9 +40,9 @@ function Header({ fps }: { fps: number }): JSX.Element {
         <a href="https://www.buymeacoffee.com/amyang" target="_blank">
           <img src="/coffee.png" alt="Buy Me A Coffee" width={140} height={34} />
         </a>
-      </div>
+      </div> */}
     </header>
-  )
+  );
 }
 
-export default Header
+export default Header;
