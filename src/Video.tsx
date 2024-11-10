@@ -240,7 +240,7 @@ function Video({
             delegate: "GPU",
           },
           runningMode: "VIDEO",
-
+          numFaces: 1,
           outputFaceBlendshapes: true,
           minFacePresenceConfidence: 0.2,
           minFaceDetectionConfidence: 0.2,
