@@ -23,7 +23,7 @@ type VideoProps = {
   setFace: (face: NormalizedLandmark[] | null) => void;
   setLeftHand: (leftHand: NormalizedLandmark[] | null) => void;
   setRightHand: (rightHand: NormalizedLandmark[] | null) => void;
-  videoSrc: string;
+  videoSrc?: string | null;
   setVideoSrc: (src: string | null) => void;
   isRecording: boolean;
   setIsRecording: (isListening: boolean) => void;
@@ -377,7 +377,8 @@ function Video({
   }, [canvasRef]);
 
   return (
-    <video
+    <>
+    {videoSrc && <video
       className={className}
       crossOrigin="anonymous"
       ref={videoRef}
@@ -387,7 +388,8 @@ function Video({
       playsInline
       autoPlay
       src={videoSrc}
-    />
+    />}
+    </>
   );
 }
 

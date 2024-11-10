@@ -17,7 +17,7 @@ export default function App() {
   const [isRecording, setIsRecording] = useState(false)
   const [processingState, setProcessingState] = useState<"IDLE" | "QUEUED" | "PROCESSING">("IDLE")
   const [progress, setProgress] = useState(0)
-  const [videoSrc, setVideoSrc] = useState<string | null>(defaultVideoSrc)
+  const [videoSrc, setVideoSrc] = useState<string | null>()
 
   const handleMicToggle = () => {
     setIsRecording(!isRecording);
@@ -48,7 +48,6 @@ export default function App() {
           {/* Video Feed Section */}
           <Card className="relative overflow-hidden rounded-xl border bg-card">
             <div className="aspect-square relative">
-              {videoSrc ? (
                 <Video
                     className="absolute inset-0 h-full w-full object-cover"
                     setPose={setPose}
@@ -64,7 +63,7 @@ export default function App() {
                     progress={progress}
                     setProgress={setProgress}
                 />
-              ) : (
+              {!videoSrc && (
                 <div className="absolute inset-0 flex items-center justify-center bg-accent/10">
                   <p className="text-sm text-muted-foreground">Video feed will appear here</p>
                 </div>
