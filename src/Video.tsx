@@ -4,6 +4,7 @@ import {
   NormalizedLandmark,
   HolisticLandmarker,
   DrawingUtils,
+  PoseLandmarker,
   FaceLandmarker,
 } from "@mediapipe/tasks-vision";
 import { Mic } from "@mui/icons-material";
@@ -217,6 +218,19 @@ function Video({
     FilesetResolver.forVisionTasks(
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.15/wasm"
     ).then(async (vision) => {
+      const poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath:
+            "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",
+          delegate: "GPU",
+        },
+        runningMode: "VIDEO",
+        minPosePresenceConfidence: 0.5,
+        minPoseDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+        outputSegmentationMasks: false,
+      })
+
       const faceLandmarker = await FaceLandmarker.createFromOptions(
         vision,
         {
@@ -239,6 +253,16 @@ function Video({
       }
       const drawingUtils = new DrawingUtils(canvasCtx as CanvasRenderingContext2D)
 
+      const drawPose = (landmarks: NormalizedLandmark[]) => {
+        drawingUtils.drawLandmarks(landmarks, {
+          radius: 2,
+        })
+        drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
+          color: "white",
+          lineWidth: 3,
+        })
+      }
+
       const drawFace = (landmarks: NormalizedLandmark[]) => {
         drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_TESSELATION, {
           color: "white",
@@ -259,6 +283,12 @@ function Video({
           videoRef.current.videoWidth > 0
         ) {
           lastTime = videoRef.current.currentTime;
+          poseLandmarker.detectForVideo(videoRef.current, performance.now(), (result) => {
+            setPose(result.worldLandmarks[0])
+            if (canvasRef.current) {
+              drawPose(result.landmarks[0])
+            }
+          })
           const faceResult = faceLandmarker.detectForVideo(videoRef.current, performance.now(), {})
           setFace(faceResult.faceLandmarks[0])
           if (canvasRef.current && faceResult.faceLandmarks.length > 0) {
@@ -303,6 +333,12 @@ function Video({
       window.removeEventListener("resize", resizeCanvas)
     }
   }, [])
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      canvasRef.current.getContext("2d")?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+    }
+}, [canvasRef])
 
   return (
     <div className="videoContainer">
