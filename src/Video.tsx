@@ -3,6 +3,8 @@ import {
   FilesetResolver,
   NormalizedLandmark,
   HolisticLandmarker,
+  DrawingUtils,
+  FaceLandmarker,
 } from "@mediapipe/tasks-vision";
 import { Mic } from "@mui/icons-material";
 import OpenAI from "openai";
@@ -28,7 +30,8 @@ function Video({
   setRightHand: (rightHand: NormalizedLandmark[]) => void;
 }): JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoSrc, setVideoSrc] = useState<string>("");
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [videoSrc, setVideoSrc] = useState<string>(defaultVideoSrc);
   const holisticLandmarkerRef = useRef<HolisticLandmarker | null>(null);
   const [lastMedia, setLastMedia] = useState<string>("VIDEO");
   const [operationId, setOperationId] = useState("");
@@ -196,7 +199,7 @@ function Video({
         pollAndUpdate();
         // Continue polling every 5 seconds
         intervalId = setInterval(pollAndUpdate, 5000);
-      }, 3000);
+      }, 30000);
     };
 
     if (operationId && !isPolling) {
@@ -214,18 +217,35 @@ function Video({
     FilesetResolver.forVisionTasks(
       "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.15/wasm"
     ).then(async (vision) => {
-      const holisticLandmarker = await HolisticLandmarker.createFromOptions(
+      const faceLandmarker = await FaceLandmarker.createFromOptions(
         vision,
         {
           baseOptions: {
             modelAssetPath:
-              "https://storage.googleapis.com/mediapipe-models/holistic_landmarker/holistic_landmarker/float16/latest/holistic_landmarker.task",
+              "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
             delegate: "GPU",
           },
           runningMode: "VIDEO",
+
+          outputFaceBlendshapes: true,
+          minFacePresenceConfidence: 0.2,
+          minFaceDetectionConfidence: 0.2,
         }
       );
 
+      const canvasCtx = canvasRef.current?.getContext("2d")
+      if (canvasCtx) {
+        canvasCtx.clearRect(0, 0, canvasRef.current!.width, canvasRef.current!.height)
+      }
+      const drawingUtils = new DrawingUtils(canvasCtx as CanvasRenderingContext2D)
+
+      const drawFace = (landmarks: NormalizedLandmark[]) => {
+        drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_TESSELATION, {
+          color: "white",
+          lineWidth: 1,
+        })
+      }
+      
       if (videoRef.current) {
         videoRef.current.src = videoSrc;
         videoRef.current.play();
@@ -239,44 +259,50 @@ function Video({
           videoRef.current.videoWidth > 0
         ) {
           lastTime = videoRef.current.currentTime;
-          holisticLandmarker.detectForVideo(
-            videoRef.current,
-            performance.now(),
-            (result) => {
-              if (result.poseWorldLandmarks[0]) {
-                setPose(result.poseWorldLandmarks[0]);
-              } else {
-                setPose([]);
-              }
-              if (result.faceLandmarks && result.faceLandmarks.length > 0) {
-                setFace(result.faceLandmarks[0]);
-              } else {
-                setFace([]);
-              }
-              if (
-                result.leftHandWorldLandmarks &&
-                result.leftHandWorldLandmarks.length > 0
-              ) {
-                setLeftHand(result.leftHandWorldLandmarks[0]);
-              } else {
-                setLeftHand([]);
-              }
-              if (
-                result.rightHandWorldLandmarks &&
-                result.rightHandWorldLandmarks.length > 0
-              ) {
-                setRightHand(result.rightHandWorldLandmarks[0]);
-              } else {
-                setRightHand([]);
-              }
-            }
-          );
+          const faceResult = faceLandmarker.detectForVideo(videoRef.current, performance.now(), {})
+          setFace(faceResult.faceLandmarks[0])
+          if (canvasRef.current && faceResult.faceLandmarks.length > 0) {
+            drawFace(faceResult.faceLandmarks[0])
+          }
         }
         requestAnimationFrame(detect);
       };
       detect();
     });
   }, [setPose, setFace, videoRef]);
+
+  useEffect(() => {
+    const resizeCanvas = () => {
+      if (videoRef.current && canvasRef.current) {
+        const videoWidth = videoRef.current.videoWidth
+        const videoHeight = videoRef.current.videoHeight
+        const containerWidth = videoRef.current.clientWidth
+        const containerHeight = videoRef.current.clientHeight
+
+        const scale = Math.min(containerWidth / videoWidth, containerHeight / videoHeight)
+        const scaledWidth = videoWidth * scale
+        const scaledHeight = videoHeight * scale
+
+        canvasRef.current.width = scaledWidth
+        canvasRef.current.height = scaledHeight
+        canvasRef.current.style.left = `${(containerWidth - scaledWidth) / 2}px`
+        canvasRef.current.style.top = `${(containerHeight - scaledHeight) / 2}px`
+      }
+    }
+    
+    const videoElement = videoRef.current
+    if (videoElement) {
+      videoElement.addEventListener("loadedmetadata", resizeCanvas)
+      window.addEventListener("resize", resizeCanvas)
+    }
+
+    return () => {
+      if (videoElement) {
+        videoElement.removeEventListener("loadedmetadata", resizeCanvas)
+      }
+      window.removeEventListener("resize", resizeCanvas)
+    }
+  }, [])
 
   return (
     <div className="videoContainer">
