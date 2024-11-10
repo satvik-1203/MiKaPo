@@ -31,8 +31,8 @@ function Video({
   setRightHand: (rightHand: NormalizedLandmark[]) => void;
 }): JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [videoSrc, setVideoSrc] = useState<string>(defaultVideoSrc);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [videoSrc, setVideoSrc] = useState<string>("");
   const holisticLandmarkerRef = useRef<HolisticLandmarker | null>(null);
   const [lastMedia, setLastMedia] = useState<string>("VIDEO");
   const [operationId, setOperationId] = useState("");
@@ -175,13 +175,13 @@ function Video({
             holisticLandmarkerRef.current
               ?.setOptions({ runningMode: "VIDEO" })
               .then(() => {
-                setVideoSrc(data?.url!);
+                // setVideoSrc(data?.url!);
                 if (videoRef.current) {
                   videoRef.current.currentTime = 0;
                 }
               });
           } else {
-            setVideoSrc(data.url);
+            // setVideoSrc(data.url);
             if (videoRef.current) {
               videoRef.current.currentTime = 0;
             }
@@ -198,9 +198,10 @@ function Video({
       // Initial poll after 30 seconds
       timeoutId = setTimeout(() => {
         pollAndUpdate();
+        setVideoSrc(defaultVideoSrc);
         // Continue polling every 5 seconds
         intervalId = setInterval(pollAndUpdate, 5000);
-      }, 30000);
+      }, 5000);
     };
 
     if (operationId && !isPolling) {
@@ -229,47 +230,59 @@ function Video({
         minPoseDetectionConfidence: 0.5,
         minTrackingConfidence: 0.5,
         outputSegmentationMasks: false,
-      })
+      });
 
-      const faceLandmarker = await FaceLandmarker.createFromOptions(
-        vision,
-        {
-          baseOptions: {
-            modelAssetPath:
-              "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
-            delegate: "GPU",
-          },
-          runningMode: "VIDEO",
-          numFaces: 1,
-          outputFaceBlendshapes: true,
-          minFacePresenceConfidence: 0.2,
-          minFaceDetectionConfidence: 0.2,
-        }
-      );
+      const faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath:
+            "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+          delegate: "GPU",
+        },
+        runningMode: "VIDEO",
+        numFaces: 1,
+        outputFaceBlendshapes: true,
+        minFacePresenceConfidence: 0.2,
+        minFaceDetectionConfidence: 0.2,
+      });
 
-      const canvasCtx = canvasRef.current?.getContext("2d")
+      const canvasCtx = canvasRef.current?.getContext("2d");
       if (canvasCtx) {
-        canvasCtx.clearRect(0, 0, canvasRef.current!.width, canvasRef.current!.height)
+        canvasCtx.clearRect(
+          0,
+          0,
+          canvasRef.current!.width,
+          canvasRef.current!.height
+        );
       }
-      const drawingUtils = new DrawingUtils(canvasCtx as CanvasRenderingContext2D)
+      const drawingUtils = new DrawingUtils(
+        canvasCtx as CanvasRenderingContext2D
+      );
 
       const drawPose = (landmarks: NormalizedLandmark[]) => {
         drawingUtils.drawLandmarks(landmarks, {
           radius: 2,
-        })
-        drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
-          color: "white",
-          lineWidth: 3,
-        })
-      }
+        });
+        drawingUtils.drawConnectors(
+          landmarks,
+          PoseLandmarker.POSE_CONNECTIONS,
+          {
+            color: "white",
+            lineWidth: 3,
+          }
+        );
+      };
 
       const drawFace = (landmarks: NormalizedLandmark[]) => {
-        drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_TESSELATION, {
-          color: "white",
-          lineWidth: 1,
-        })
-      }
-      
+        drawingUtils.drawConnectors(
+          landmarks,
+          FaceLandmarker.FACE_LANDMARKS_TESSELATION,
+          {
+            color: "white",
+            lineWidth: 1,
+          }
+        );
+      };
+
       if (videoRef.current) {
         videoRef.current.src = videoSrc;
         videoRef.current.play();
@@ -283,16 +296,24 @@ function Video({
           videoRef.current.videoWidth > 0
         ) {
           lastTime = videoRef.current.currentTime;
-          poseLandmarker.detectForVideo(videoRef.current, performance.now(), (result) => {
-            setPose(result.worldLandmarks[0])
-            if (canvasRef.current) {
-              drawPose(result.landmarks[0])
+          poseLandmarker.detectForVideo(
+            videoRef.current,
+            performance.now(),
+            (result) => {
+              setPose(result.worldLandmarks[0]);
+              if (canvasRef.current) {
+                drawPose(result.landmarks[0]);
+              }
             }
-          })
-          const faceResult = faceLandmarker.detectForVideo(videoRef.current, performance.now(), {})
-          setFace(faceResult.faceLandmarks[0])
+          );
+          const faceResult = faceLandmarker.detectForVideo(
+            videoRef.current,
+            performance.now(),
+            {}
+          );
+          setFace(faceResult.faceLandmarks[0]);
           if (canvasRef.current && faceResult.faceLandmarks.length > 0) {
-            drawFace(faceResult.faceLandmarks[0])
+            drawFace(faceResult.faceLandmarks[0]);
           }
         }
         requestAnimationFrame(detect);
@@ -304,41 +325,50 @@ function Video({
   useEffect(() => {
     const resizeCanvas = () => {
       if (videoRef.current && canvasRef.current) {
-        const videoWidth = videoRef.current.videoWidth
-        const videoHeight = videoRef.current.videoHeight
-        const containerWidth = videoRef.current.clientWidth
-        const containerHeight = videoRef.current.clientHeight
+        const videoWidth = videoRef.current.videoWidth;
+        const videoHeight = videoRef.current.videoHeight;
+        const containerWidth = videoRef.current.clientWidth;
+        const containerHeight = videoRef.current.clientHeight;
 
-        const scale = Math.min(containerWidth / videoWidth, containerHeight / videoHeight)
-        const scaledWidth = videoWidth * scale
-        const scaledHeight = videoHeight * scale
+        const scale = Math.min(
+          containerWidth / videoWidth,
+          containerHeight / videoHeight
+        );
+        const scaledWidth = videoWidth * scale;
+        const scaledHeight = videoHeight * scale;
 
-        canvasRef.current.width = scaledWidth
-        canvasRef.current.height = scaledHeight
-        canvasRef.current.style.left = `${(containerWidth - scaledWidth) / 2}px`
-        canvasRef.current.style.top = `${(containerHeight - scaledHeight) / 2}px`
+        canvasRef.current.width = scaledWidth;
+        canvasRef.current.height = scaledHeight;
+        canvasRef.current.style.left = `${
+          (containerWidth - scaledWidth) / 2
+        }px`;
+        canvasRef.current.style.top = `${
+          (containerHeight - scaledHeight) / 2
+        }px`;
       }
-    }
-    
-    const videoElement = videoRef.current
+    };
+
+    const videoElement = videoRef.current;
     if (videoElement) {
-      videoElement.addEventListener("loadedmetadata", resizeCanvas)
-      window.addEventListener("resize", resizeCanvas)
+      videoElement.addEventListener("loadedmetadata", resizeCanvas);
+      window.addEventListener("resize", resizeCanvas);
     }
 
     return () => {
       if (videoElement) {
-        videoElement.removeEventListener("loadedmetadata", resizeCanvas)
+        videoElement.removeEventListener("loadedmetadata", resizeCanvas);
       }
-      window.removeEventListener("resize", resizeCanvas)
-    }
-  }, [])
+      window.removeEventListener("resize", resizeCanvas);
+    };
+  }, []);
 
   useEffect(() => {
     if (canvasRef.current) {
-      canvasRef.current.getContext("2d")?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+      canvasRef.current
+        .getContext("2d")
+        ?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     }
-}, [canvasRef])
+  }, [canvasRef]);
 
   return (
     <div className="videoContainer">
@@ -370,9 +400,12 @@ function Video({
           disablePictureInPicture
           controlsList="nofullscreen noremoteplayback"
           playsInline
-          muted
           autoPlay
           src={videoSrc}
+          style={{
+            width: "0",
+            height: "0",
+          }}
         />
       )}
     </div>
