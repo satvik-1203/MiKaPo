@@ -26,7 +26,7 @@ export default function App() {
   const getLoadingText = () => {
     switch (processingState) {
       case "QUEUED":
-        return "Preparing to process..."
+        return `Preparing to process... ${Math.round(progress)}%`
       case "PROCESSING":
         return `Processing motion capture... ${Math.round(progress)}%`
       default:
@@ -79,7 +79,7 @@ export default function App() {
                   }`}
                   onClick={handleMicToggle}
                   disabled={isProcessing}
-                >
+                > 
                   {isProcessing ? (
                     <Loader2 className="h-6 w-6 animate-spin" />
                   ) : isRecording ? (
