@@ -69,14 +69,21 @@ export default function App() {
               
               {/* Microphone Button */}
               <div className="absolute left-1/2 bottom-6 -translate-x-1/2">
-                <Button
-                  size="lg"
-                  className={`h-16 w-16 rounded-full ${
-                    isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary/90'
-                  }`}
-                  onClick={handleMicToggle}
-                  disabled={isProcessing}
-                > 
+                <div className="relative">
+                  {isRecording && (
+                    <>
+                      <span className="absolute inset-0 rounded-full animate-ping-slow bg-red-500/20" />
+                      <span className="absolute inset-0 rounded-full animate-ping-slower bg-red-500/10" />
+                    </>
+                  )}
+                  <Button
+                    size="lg"
+                    className={`h-16 w-16 rounded-full ${
+                      isRecording ? 'bg-red-500 hover:bg-red-600 animate-pulse scale-105' : 'bg-primary hover:bg-primary/90'
+                    }`}
+                    onClick={handleMicToggle}
+                    disabled={isProcessing}
+                  > 
                   {isProcessing ? (
                     <Loader2 className="h-6 w-6 animate-spin" />
                   ) : isRecording ? (
@@ -85,6 +92,7 @@ export default function App() {
                     <Mic className="h-6 w-6" />
                   )}
                 </Button>
+                </div>
               </div>
             </div>
           </Card>
