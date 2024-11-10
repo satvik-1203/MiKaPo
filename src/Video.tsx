@@ -7,8 +7,10 @@ import {
   PoseLandmarker,
   FaceLandmarker,
 } from "@mediapipe/tasks-vision";
-import { Mic } from "@mui/icons-material";
 import OpenAI from "openai";
+
+const defaultVideoSrc =
+  "https://res.cloudinary.com/du1vewppc/video/upload/videos/cropped_result_kl86y4.mp4";
 
 type CaptionsResponse = {
   url?: string;
@@ -16,30 +18,43 @@ type CaptionsResponse = {
   progress?: number;
 };
 
-const defaultVideoSrc =
-  "https://res.cloudinary.com/du1vewppc/video/upload/videos/cropped_result_kl86y4.mp4";
+type VideoProps = {
+  setPose: (pose: NormalizedLandmark[] | null) => void;
+  setFace: (face: NormalizedLandmark[] | null) => void;
+  setLeftHand: (leftHand: NormalizedLandmark[] | null) => void;
+  setRightHand: (rightHand: NormalizedLandmark[] | null) => void;
+  videoSrc: string;
+  setVideoSrc: (src: string | null) => void;
+  isRecording: boolean;
+  setIsRecording: (isListening: boolean) => void;
+  processingState: "IDLE" | "QUEUED" | "PROCESSING";
+  setProcessingState: (state: "IDLE" | "QUEUED" | "PROCESSING") => void;
+  progress: number;
+  setProgress: (progress: number) => void;
+  className?: string;
+};
 
 function Video({
   setPose,
   setFace,
   setLeftHand,
   setRightHand,
-}: {
-  setPose: (pose: NormalizedLandmark[]) => void;
-  setFace: (face: NormalizedLandmark[]) => void;
-  setLeftHand: (leftHand: NormalizedLandmark[]) => void;
-  setRightHand: (rightHand: NormalizedLandmark[]) => void;
-}): JSX.Element {
+  videoSrc,
+  setVideoSrc,
+  isRecording,
+  setIsRecording,
+  processingState,
+  setProcessingState,
+  progress,
+  setProgress,
+  className,
+}: VideoProps): JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [videoSrc, setVideoSrc] = useState<string>("");
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const holisticLandmarkerRef = useRef<HolisticLandmarker | null>(null);
   const [lastMedia, setLastMedia] = useState<string>("VIDEO");
   const [operationId, setOperationId] = useState("");
   const [isPolling, setIsPolling] = useState<boolean>(false);
-  const [progress, setProgress] = useState<number>(0);
-  const [inProgress, setInProgress] = useState<boolean>(false);
-  const [selectedTool, setSelectedTool] = useState<string>("speech");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [audioBuffer, setAudioBuffer] = useState<ArrayBuffer | null>(null);
   const openai = useRef<OpenAI>(
@@ -48,11 +63,6 @@ function Video({
       dangerouslyAllowBrowser: true,
     })
   );
-  const [processingState, setProcessingState] = useState<
-    "IDLE" | "QUEUED" | "PROCESSING"
-  >("IDLE");
-
-  const [isRecording, setIsRecording] = useState<boolean>(false);
 
   const handleSpeechToCaptions = async (script: string) => {
     const captionsSubmitRequest = await fetch(
@@ -273,17 +283,13 @@ function Video({
       };
 
       const drawFace = (landmarks: NormalizedLandmark[]) => {
-        drawingUtils.drawConnectors(
-          landmarks,
-          FaceLandmarker.FACE_LANDMARKS_TESSELATION,
-          {
-            color: "white",
-            lineWidth: 1,
-          }
-        );
-      };
-
-      if (videoRef.current) {
+        drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_TESSELATION, {
+          color: "white",
+          lineWidth: 1,
+        })
+      }
+      
+      if (videoRef.current && videoSrc) {
         videoRef.current.src = videoSrc;
         videoRef.current.play();
       }
@@ -371,44 +377,17 @@ function Video({
   }, [canvasRef]);
 
   return (
-    <div className="videoContainer">
-      <div
-        style={{
-          position: "fixed",
-          zIndex: 1000,
-          top: 100,
-          left: 100,
-          width: "fit-content",
-          height: "fit-content",
-        }}
-      >
-        <Mic
-          sx={{
-            fontSize: 100,
-            color: isRecording ? "#ff4444" : "#666666",
-            cursor: "pointer",
-          }}
-          onClick={() => setIsRecording(!isRecording)}
-        />
-      </div>
-
-      {videoSrc.trim() && (
-        <video
-          crossOrigin="anonymous"
-          ref={videoRef}
-          controls
-          disablePictureInPicture
-          controlsList="nofullscreen noremoteplayback"
-          playsInline
-          autoPlay
-          src={videoSrc}
-          style={{
-            width: "0",
-            height: "0",
-          }}
-        />
-      )}
-    </div>
+    <video
+      className={className}
+      crossOrigin="anonymous"
+      ref={videoRef}
+      controls
+      disablePictureInPicture
+      controlsList="nofullscreen noremoteplayback"
+      playsInline
+      autoPlay
+      src={videoSrc}
+    />
   );
 }
 
