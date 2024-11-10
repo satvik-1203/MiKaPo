@@ -5,9 +5,7 @@ import { Mic, MicOff, Loader2 } from 'lucide-react'
 import MMDScene from './MMDScene'
 import { NormalizedLandmark } from '@mediapipe/tasks-vision'
 import Video from './Video'
-
-const defaultVideoSrc =
-  "https://res.cloudinary.com/du1vewppc/video/upload/videos/cropped_result_kl86y4.mp4";
+import { DEFAULT_VIDEO_SRC } from './lib/constants'
 
 export default function App() {
   const [pose, setPose] = useState<NormalizedLandmark[] | null>(null)

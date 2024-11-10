@@ -8,9 +8,7 @@ import {
   FaceLandmarker,
 } from "@mediapipe/tasks-vision";
 import OpenAI from "openai";
-
-const defaultVideoSrc =
-  "https://res.cloudinary.com/du1vewppc/video/upload/videos/cropped_result_kl86y4.mp4";
+import { DEFAULT_VIDEO_SRC } from "./lib/constants";
 
 type CaptionsResponse = {
   url?: string;
@@ -208,7 +206,7 @@ function Video({
       // Initial poll after 30 seconds
       timeoutId = setTimeout(() => {
         pollAndUpdate();
-        setVideoSrc(defaultVideoSrc);
+        setVideoSrc(DEFAULT_VIDEO_SRC);
         // Continue polling every 5 seconds
         intervalId = setInterval(pollAndUpdate, 5000);
       }, 5000);
@@ -378,17 +376,27 @@ function Video({
 
   return (
     <>
-    {videoSrc && <video
-      className={className}
-      crossOrigin="anonymous"
-      ref={videoRef}
-      controls
-      disablePictureInPicture
-      controlsList="nofullscreen noremoteplayback"
-      playsInline
-      autoPlay
-      src={videoSrc}
-    />}
+      {videoSrc && 
+        <video
+          className={className}
+          crossOrigin="anonymous"
+          ref={videoRef}
+          controls
+          disablePictureInPicture
+          controlsList="nofullscreen noremoteplayback"
+          playsInline
+          autoPlay
+          src={videoSrc}
+        />
+      }
+      {/* <canvas
+        ref={canvasRef}
+        style={{
+          position: "absolute",
+          zIndex: "1001",
+          pointerEvents: "none",
+        }}
+      /> */}
     </>
   );
 }
