@@ -9,7 +9,6 @@ import {
 } from "@mediapipe/tasks-vision";
 import OpenAI from "openai";
 import { DEFAULT_VIDEO_SRC } from "./lib/constants";
-import { DailyVideo, useLocalSessionId } from "@daily-co/daily-react";
 
 type CaptionsResponse = {
   url?: string;
@@ -49,7 +48,7 @@ function Video({
   className,
 }: VideoProps): JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const holisticLandmarkerRef = useRef<HolisticLandmarker | null>(null);
   const [lastMedia, setLastMedia] = useState<string>("VIDEO");
   const [operationId, setOperationId] = useState("");
@@ -62,7 +61,6 @@ function Video({
       dangerouslyAllowBrowser: true,
     })
   );
-  const sessionId = useLocalSessionId();
 
   const handleSpeechToCaptions = async (script: string) => {
     const captionsSubmitRequest = await fetch(
@@ -283,16 +281,12 @@ function Video({
       };
 
       const drawFace = (landmarks: NormalizedLandmark[]) => {
-        drawingUtils.drawConnectors(
-          landmarks,
-          FaceLandmarker.FACE_LANDMARKS_TESSELATION,
-          {
-            color: "white",
-            lineWidth: 1,
-          }
-        );
-      };
-
+        drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_TESSELATION, {
+          color: "white",
+          lineWidth: 1,
+        })
+      }
+      
       if (videoRef.current && videoSrc) {
         videoRef.current.src = videoSrc;
         videoRef.current.play();
@@ -382,19 +376,19 @@ function Video({
 
   return (
     <>
-      <DailyVideo sessionId={sessionId} type="video" />
-      {/* // <video
-        //   className={className}
-        //   crossOrigin="anonymous"
-        //   ref={videoRef}
-        //   controls
-        //   disablePictureInPicture
-        //   controlsList="nofullscreen noremoteplayback"
-        //   playsInline
-        //   autoPlay
-        //   src={videoSrc}
-        // /> */}
-
+      {videoSrc && 
+        <video
+          className={className}
+          crossOrigin="anonymous"
+          ref={videoRef}
+          controls
+          disablePictureInPicture
+          controlsList="nofullscreen noremoteplayback"
+          playsInline
+          autoPlay
+          src={videoSrc}
+        />
+      }
       {/* <canvas
         ref={canvasRef}
         style={{
